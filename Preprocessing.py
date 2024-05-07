@@ -1,18 +1,17 @@
 import cv2
-import numpy as np
 
 
 def gaussian_mixture_model(video_path):
     vid = cv2.VideoCapture(video_path)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
-    back_sub = cv2.createBackgroundSubtractorMOG2(detectShadows=True, varThreshold=15)
+    back_sub = cv2.createBackgroundSubtractorMOG2(history=90, detectShadows=False, varThreshold=15)
 
     while True:
         ret, frame = vid.read()
         if not ret:
             break
 
-        frame = cv2.resize(frame, (640, 360))
+        frame = cv2.resize(frame, (960, 540))
         frame = cv2.GaussianBlur(frame, (3, 3), 0)
         back_sub_mask = back_sub.apply(frame)
         back_sub_mask = cv2.morphologyEx(back_sub_mask, cv2.MORPH_OPEN, kernel)
@@ -35,7 +34,7 @@ def enhance_video(video_path):
             break
 
         frame = cv2.resize(frame, (960, 540))
-        clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(8, 8))
+        clahe = cv2.createCLAHE(clipLimit=1.8, tileGridSize=(4, 4))
 
         b, g, r = cv2.split(frame)
         b = clahe.apply(b)
@@ -55,7 +54,7 @@ def enhance_video(video_path):
 def test(video_path):
     vid = cv2.VideoCapture(video_path)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
-    back_sub = cv2.createBackgroundSubtractorMOG2(detectShadows=True, varThreshold=15)
+    back_sub = cv2.createBackgroundSubtractorMOG2(history=90, detectShadows=False, varThreshold=15)
     while True:
         ret, frame = vid.read()
         if not ret:
@@ -63,9 +62,10 @@ def test(video_path):
             break
 
         frame = cv2.resize(frame, (960, 540))
-        clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(8, 8))
+        frame_blur = cv2.GaussianBlur(frame, (3, 3), 0)
+        clahe = cv2.createCLAHE(clipLimit=1.8, tileGridSize=(4, 4))
 
-        b, g, r = cv2.split(frame)
+        b, g, r = cv2.split(frame_blur)
         b = clahe.apply(b)
         g = clahe.apply(g)
         r = clahe.apply(r)
@@ -76,7 +76,7 @@ def test(video_path):
         contrast_adjusted_mask = cv2.morphologyEx(back_sub_mask, cv2.MORPH_OPEN, kernel)
 
         cv2.imshow('Original video', frame)
-        cv2.imshow('Foreground Mask with Gaussian Blurring', contrast_adjusted_mask)
+        cv2.imshow('Foreground Mask with Gaussian Blurring and CLAHE', contrast_adjusted_mask)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
